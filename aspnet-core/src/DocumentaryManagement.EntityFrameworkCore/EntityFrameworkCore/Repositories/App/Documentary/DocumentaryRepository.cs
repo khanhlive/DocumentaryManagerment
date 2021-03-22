@@ -41,7 +41,7 @@ namespace DocumentaryManagement.EntityFrameworkCore.Repositories.App.Documentary
                 entity.UpdatedDate = DateTime.Now;
                 if (AbpSession.UserId != null) entity.UpdatedId = AbpSession.UserId.Value;
             }
-            if (item != null)
+            if (item != null && entity.ReleaseDate.Year == item.ReleaseDate.Year)
             {
                 throw new UserFriendlyException($"Ký hiệu văn bản: \"{entity.Code}\" đã tồn tại trong hệ thống");
             }
@@ -98,6 +98,11 @@ namespace DocumentaryManagement.EntityFrameworkCore.Repositories.App.Documentary
                 {
                     query = query.Where(p => documentFilterOptions.Approved == 1 ? p.IsApproved == true : (p.IsApproved == false || p.IsApproved == null));
                 }
+
+                query = from a in query
+                    where (documentFilterOptions.Year == null || documentFilterOptions.Year == -1 ||
+                           a.ReleaseDate.Year == documentFilterOptions.Year)
+                    select a;
             }
 
             return SetEntityIncludes(query);
@@ -116,7 +121,8 @@ namespace DocumentaryManagement.EntityFrameworkCore.Repositories.App.Documentary
                           from doc1 in kq2.DefaultIfEmpty()
                           join agen in DbContext.AppAgencyIssued on a.AgencyIssuedId equals agen.Id into kq3
                           from agen1 in kq3.DefaultIfEmpty()
-                          orderby a.TextNumber
+                          where (documentFilterOptions.Year == null || documentFilterOptions.Year == -1 || a.ReleaseDate.Year == documentFilterOptions.Year)
+                          orderby a.ReleaseDate.Year descending, a.PrefixNumber, a.SuffixNumber
                           select new
                           {
                               a,
@@ -174,14 +180,15 @@ namespace DocumentaryManagement.EntityFrameworkCore.Repositories.App.Documentary
             if (documentFilterOptions != null)
             {
                 query = (from a in query.Where(p => p.Type == documentFilterOptions.Type)
-                    where (documentFilterOptions.LoaiVanBan == null ||
-                           a.DocumentTypeId == documentFilterOptions.LoaiVanBan)
-                    where (documentFilterOptions.NgayTuDate == null ||
-                           a.ReleaseDate >= documentFilterOptions.NgayTuDate)
-                    where (documentFilterOptions.NgayDenDate == null ||
-                           a.ReleaseDate <= documentFilterOptions.NgayDenDate)
-                    orderby a.TextNumber
-                    select a);
+                         where (documentFilterOptions.LoaiVanBan == null ||
+                                a.DocumentTypeId == documentFilterOptions.LoaiVanBan)
+                         where (documentFilterOptions.NgayTuDate == null ||
+                                a.ReleaseDate >= documentFilterOptions.NgayTuDate)
+                         where (documentFilterOptions.NgayDenDate == null ||
+                                a.ReleaseDate <= documentFilterOptions.NgayDenDate)
+                         where (documentFilterOptions.Year == null || documentFilterOptions.Year == -1 || a.ReleaseDate.Year == documentFilterOptions.Year)
+                         orderby a.ReleaseDate.Year descending, a.PrefixNumber, a.SuffixNumber
+                         select a);
 
             }
             return SetEntityIncludes(query);
@@ -211,51 +218,53 @@ namespace DocumentaryManagement.EntityFrameworkCore.Repositories.App.Documentary
             else if (permissionType == Authorization.PermissionType.Approved)
             {
                 query = (from a in query
-                        join b in DbContext.AppRotation.Where(p =>
-                            p.UserId == null ? p.DepartmentId == departmentId : p.UserId == userId) on a.Id equals b
-                            .DocumentId into kq
-                        where (a.ApprovedType == 1
-                            ? a.ApprovedUserId == userId
-                            : a.ApprovedDepartmentId == departmentId) || (kq.Any())
-                        orderby a.TextNumber
-                        select a
+                         join b in DbContext.AppRotation.Where(p =>
+                             p.UserId == null ? p.DepartmentId == departmentId : p.UserId == userId) on a.Id equals b
+                             .DocumentId into kq
+                         where (a.ApprovedType == 1
+                             ? a.ApprovedUserId == userId
+                             : a.ApprovedDepartmentId == departmentId) || (kq.Any())
+
+                         orderby a.ReleaseDate.Year descending, a.PrefixNumber, a.SuffixNumber
+                         select a
                     );
             }
             else
             {
                 query = (from a in query
-                        join b in DbContext.AppRotation.Where(p =>
-                            p.UserId == null ? p.DepartmentId == departmentId : p.UserId == userId) on a.Id equals b
-                            .DocumentId into kq
-                        where (kq.Any())
-                        orderby a.TextNumber
-                        select a
+                         join b in DbContext.AppRotation.Where(p =>
+                             p.UserId == null ? p.DepartmentId == departmentId : p.UserId == userId) on a.Id equals b
+                             .DocumentId into kq
+                         where (kq.Any())
+                         orderby a.ReleaseDate.Year descending, a.PrefixNumber, a.SuffixNumber
+                         select a
                     );
             }
             if (searchOptions != null)
             {
                 query = (from doc in query.Where(p => p.Type == searchOptions.Type)
-                        where (searchOptions.Code == null || searchOptions.Code == string.Empty) ||
-                              doc.Code.ToLower().Contains(searchOptions.Code.ToLower())
-                        where (searchOptions.NoiDungTomTat == null || searchOptions.NoiDungTomTat == string.Empty) ||
-                              doc.SummaryContent.ToLower().Contains(searchOptions.NoiDungTomTat.ToLower())
-                        where ((!searchOptions.NgayBanHanhTu.HasValue ||
-                                doc.ReleaseDate >= searchOptions.NgayBanHanhTu) &&
-                               (!searchOptions.NgayBanHanhDen.HasValue ||
-                                doc.ReleaseDate <= searchOptions.NgayBanHanhDen))
-                        where ((!searchOptions.NgayGuiTu.HasValue || doc.ReceivedDate >= searchOptions.NgayGuiTu) &&
-                               (!searchOptions.NgayGuiDen.HasValue || doc.ReceivedDate <= searchOptions.NgayGuiDen))
-                        orderby doc.TextNumber
-                        select doc
+                         where (searchOptions.Code == null || searchOptions.Code == string.Empty) ||
+                               doc.Code.ToLower().Contains(searchOptions.Code.ToLower())
+                         where (searchOptions.NoiDungTomTat == null || searchOptions.NoiDungTomTat == string.Empty) ||
+                               doc.SummaryContent.ToLower().Contains(searchOptions.NoiDungTomTat.ToLower())
+                         where ((!searchOptions.NgayBanHanhTu.HasValue ||
+                                 doc.ReleaseDate >= searchOptions.NgayBanHanhTu) &&
+                                (!searchOptions.NgayBanHanhDen.HasValue ||
+                                 doc.ReleaseDate <= searchOptions.NgayBanHanhDen))
+                         where ((!searchOptions.NgayGuiTu.HasValue || doc.ReceivedDate >= searchOptions.NgayGuiTu) &&
+                                (!searchOptions.NgayGuiDen.HasValue || doc.ReceivedDate <= searchOptions.NgayGuiDen))
+                         where (searchOptions.Year == null || searchOptions.Year == -1 || doc.ReleaseDate.Year == searchOptions.Year)
+                         orderby doc.ReleaseDate.Year descending, doc.PrefixNumber, doc.SuffixNumber
+                         select doc
                     );
                 if (!string.IsNullOrEmpty(searchOptions.NoiBanHanh))
                 {
                     query = (from doc in query
-                            join pl in DbContext.AppAgencyIssued
-                                .Where(p => p.Name.ToLower().Contains(searchOptions.NoiBanHanh))
-                                .Select(p => p.Id) on doc.AgencyIssuedId equals pl
-                            orderby doc.TextNumber
-                            select doc
+                             join pl in DbContext.AppAgencyIssued
+                                 .Where(p => p.Name.ToLower().Contains(searchOptions.NoiBanHanh))
+                                 .Select(p => p.Id) on doc.AgencyIssuedId equals pl
+                             orderby doc.ReleaseDate.Year descending, doc.PrefixNumber, doc.SuffixNumber
+                             select doc
                         );
                 }
             }

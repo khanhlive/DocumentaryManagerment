@@ -1,4 +1,5 @@
-﻿using Abp.Domain.Repositories;
+﻿using System;
+using Abp.Domain.Repositories;
 using Abp.Web.Models;
 using DevExtreme.AspNet.Data.ResponseModel;
 using DocumentaryManagement.Authorization;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace DocumentaryManagement.Documentary
@@ -45,6 +47,7 @@ namespace DocumentaryManagement.Documentary
                     input.ApprovedDepartmentId = user.DepartmentId;
                 }
             }
+            SetTextNumber(input);
             var result = await base.Create(input);
             if (result.Id > 0)
             {
@@ -57,6 +60,7 @@ namespace DocumentaryManagement.Documentary
             }
             return result;
         }
+
         public override async Task<DocumentaryDto> Update(UpdateDocumentaryDto input)
         {
             StandardizedStringOfEntity(input);
@@ -73,6 +77,7 @@ namespace DocumentaryManagement.Documentary
                     input.ApprovedDepartmentId = user.DepartmentId;
                 }
             }
+            SetTextNumber(input);
             var result = await base.Update(input);
             if (result.Id > 0)
             {
@@ -114,7 +119,6 @@ namespace DocumentaryManagement.Documentary
             var filter = loadOptions.Parse<DocumentFilterOptions>();
             return ((IDocumentaryRepository)AbpRepository).GetDevExtreme(loadOptions, filter, _type);
         }
-
 
         private PermissionType GetPermissionType()
         {
@@ -163,5 +167,75 @@ namespace DocumentaryManagement.Documentary
         {
             return (await ((IDocumentaryRepository)AbpRepository).GetUserApproved()).Select(p => ObjectMapper.Map<UserDto>(p));
         }
+
+        [ActionName("update-database")]
+        public IEnumerable<DocumentaryDto> UpdateDb()
+        {
+            //var query = Repository.GetAll().ToList().Select(p =>
+            //{
+            //    var dto = MapToEntityDto(p);
+            //    var (item1, item2) = SplitTextNumber(dto.TextNumber);
+            //    dto.PrefixNumber = item1;
+            //    dto.SuffixNumber = item2;
+            //    return dto;
+            //}).ToList();
+
+            var entities = Repository.GetAll().ToList();
+            entities.ForEach(SetTextNumber);
+            CurrentUnitOfWork.SaveChanges();
+            return null;
+        }
+
+        #region Ultilities
+
+        private void SetTextNumber(AppDocumentary documentary)
+        {
+            var (item1, item2) = SplitTextNumber(documentary.TextNumber);
+            if (int.TryParse(item1, out int prefix))
+            {
+                documentary.PrefixNumber = prefix;
+            }
+            documentary.SuffixNumber = item2;
+        }
+
+        private void SetTextNumber(CreateDocumentaryDto documentary)
+        {
+            var (item1, item2) = SplitTextNumber(documentary.TextNumber);
+            if (int.TryParse(item1, out int prefix))
+            {
+                documentary.PrefixNumber = prefix;
+            }
+            documentary.SuffixNumber = item2;
+        }
+
+        private void SetTextNumber(UpdateDocumentaryDto documentary)
+        {
+            var (item1, item2) = SplitTextNumber(documentary.TextNumber);
+            if (int.TryParse(item1, out int prefix))
+            {
+                documentary.PrefixNumber = prefix;
+            }
+            documentary.SuffixNumber = item2;
+        }
+
+        private Tuple<string, string> SplitTextNumber(string textNumber)
+        {
+            var regex = new Regex(@"([0-9]+)|([a-zA-Z0-9]+)");
+            var matches = regex.Matches(textNumber.Trim());
+            string prefix;
+            switch (matches.Count)
+            {
+                case 0:
+                    return new Tuple<string, string>(textNumber, null);
+                case 1:
+                    prefix = matches[0].Value;
+                    return new Tuple<string, string>(prefix, null);
+            }
+            prefix = matches[0].Value;
+            var suffix = new string(textNumber).Replace(prefix, string.Empty);
+            return new Tuple<string, string>(prefix, suffix);
+        }
+
+        #endregion
     }
 }

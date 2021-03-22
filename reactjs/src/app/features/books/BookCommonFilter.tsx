@@ -16,7 +16,11 @@ export interface IBookCommonFilterProps {
 
 export default class BookCommonFilter extends Component<IBookCommonFilterProps, any> {
     constructor(props: any) {
-        super(props);
+        super(props); const years = [];
+        const currentYear = new Date().getFullYear();
+        for (var year = currentYear; year > (currentYear - 10); year--) {
+            years.push(year)
+        }
         this.state = {
             filterData: {
                 year: new Date().getFullYear(),
@@ -26,7 +30,8 @@ export default class BookCommonFilter extends Component<IBookCommonFilterProps, 
                 loaiVanBan: '',
                 loaiVanBan_Name: ''
             },
-            documentTypeOption: []
+            documentTypeOption: [],
+            years: years
         }
         this.handleSelectChange = this.handleSelectChange.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
@@ -105,11 +110,7 @@ export default class BookCommonFilter extends Component<IBookCommonFilterProps, 
         });
     }
     render() {
-        const _year = new Date().getFullYear();
-        let source = [];
-        for (let index = _year; index >= _year - 20; index--) {
-            source.push(index);
-        }
+        const { years } = this.state;
         return (
             <JarvisWidget id="wid-id-search-van-ban-di" editbutton={false} color={JavisWidgetDefault.color} refresh={true}>
                 <header>
@@ -165,7 +166,14 @@ export default class BookCommonFilter extends Component<IBookCommonFilterProps, 
                                 </div>
                             </div>
                             <div className="form-group">
-                                <div className="col-md-4 col-md-offset-8 text-right">
+                                <label className="control-label col-md-1">Năm:</label>
+                                <div className="col-md-3">
+                                    <select className="form-control" onChange={this.handleInputChange} value={this.state.filterData.year} placeholder="Năm..." name="year">
+                                        <option key='all' value={-1} >Tất cả</option>
+                                        {years.map((year: number) => (<option key={year} value={year}>{year}</option>))}
+                                    </select>
+                                </div>
+                                <div className="col-md-4 col-md-offset-4 text-right">
                                     <button type="button" style={{ marginLeft: '10px' }} onClick={this.handleSearch} className="btn btn-primary"><i className="fa fa-search"></i>&nbsp;Tìm kiếm</button>
                                     <button type="button" style={{ marginLeft: '10px' }} onClick={this.handlePrinting} className="btn btn-info"><i className="fa fa-print"></i>&nbsp;In</button>
                                 </div>

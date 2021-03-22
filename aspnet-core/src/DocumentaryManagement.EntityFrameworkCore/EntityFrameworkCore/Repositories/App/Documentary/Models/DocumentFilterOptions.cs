@@ -9,7 +9,7 @@ namespace DocumentaryManagement.EntityFrameworkCore.Repositories.App.Documentary
         public int FilterBy { get; set; }
         public bool Exactly { get; set; }
         public int Type { get; set; }
-        public int Year { get; set; }
+        public int? Year { get; set; }
         public int Approved { get; set; }
         public string NgayTu
         {

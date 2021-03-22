@@ -13,14 +13,21 @@ export interface IEDocumentaryFilterProps {
 export default class EDocumentaryFilterComponent extends Component<IEDocumentaryFilterProps, any> {
     constructor(props: any) {
         super(props);
+        const years = [];
+        const currentYear = new Date().getFullYear();
+        for (var year = currentYear; year > (currentYear - 10); year--) {
+            years.push(year)
+        }
         this.state = {
             filterData: {
                 keyword: '',
                 filterBy: 1,
                 exactly: false,
                 type: DocumentaryType.EDocumentary,
-                approved: 0
-            }
+                approved: 0,
+                year: currentYear
+            },
+            years: years
         }
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
@@ -46,6 +53,7 @@ export default class EDocumentaryFilterComponent extends Component<IEDocumentary
         });
     }
     render() {
+        const { years } = this.state;
         const allowApproved = isGranted(PermissionNames.Permission_Approved);
         const allowDocument = isGranted(PermissionNames.Permission_DocumentManager);
         return (
@@ -97,8 +105,20 @@ export default class EDocumentaryFilterComponent extends Component<IEDocumentary
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="col-lg-2 col-md-6">
+                            <div className="col-lg-2 col-md-5">
+                                <div className="form-group">
+                                    <div>
+                                        <label htmlFor="inputEmail3" className="col-sm-4 control-label">Năm</label>
+                                        <div className="col-sm-8">
+                                            <select className="form-control" onChange={this.handleInputChange} value={this.state.filterData.year} placeholder="Năm..." name="year">
+                                                <option key='all' value={-1} >Tất cả</option>
+                                                {years.map((year: number) => (<option key={year} value={year}>{year}</option>))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ display: 'none' }} className="col-lg-2 col-md-6">
                                 <div className="form-group">
                                     <div className="col-lg-12 col-lg-offset-0 col-md-10 col-md-offset-2 col-sm-10 col-sm-offset-2">
                                         <label className="checkbox-inline">

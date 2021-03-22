@@ -26,6 +26,10 @@ namespace DocumentaryManagement.Documentary.Dto
         [JsonIgnore]
         public DateTime ReceivedDate { get; set; }
         public string TextNumber { get; set; }
+        [JsonIgnore]
+        public int? PrefixNumber { get; set; }
+        [JsonIgnore]
+        public string SuffixNumber { get; set; }
         public string Signer { get; set; }
         public string ApprovedBy { get; set; }
         public string ReceivedBy { get; set; }

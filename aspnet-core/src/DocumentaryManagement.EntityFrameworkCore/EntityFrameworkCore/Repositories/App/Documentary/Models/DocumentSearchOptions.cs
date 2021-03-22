@@ -12,5 +12,6 @@ namespace DocumentaryManagement.EntityFrameworkCore.Repositories.App.Documentary
         public DateTime? NgayGuiTu { get; set; }
         public DateTime? NgayGuiDen { get; set; }
         public int Type { get; set; }
+        public int? Year { get; set; }
     }
 }

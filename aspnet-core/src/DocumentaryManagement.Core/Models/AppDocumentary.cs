@@ -26,6 +26,10 @@ namespace DocumentaryManagement.Model
         public DateTime ReceivedDate { get; set; }
         [StringLength(250)]
         public string TextNumber { get; set; }
+        [StringLength(200)]
+        public int? PrefixNumber { get; set; }
+        [StringLength(200)]
+        public string SuffixNumber { get; set; }
         [StringLength(250)]
         public string Signer { get; set; }
         [StringLength(250)]

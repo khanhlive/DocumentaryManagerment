@@ -12,13 +12,21 @@ export interface IDocumentaryFilterProps {
 export default class DocumentaryInternalFilterComponent extends Component<IDocumentaryFilterProps, any> {
     constructor(props: any) {
         super(props);
+
+        const years = [];
+        const currentYear = new Date().getFullYear();
+        for (var year = currentYear; year > (currentYear - 10); year--) {
+            years.push(year)
+        }
         this.state = {
             filterData: {
                 keyword: '',
                 filterBy: 1,
                 exactly: false,
-                type: DocumentaryType.DocumentaryInternal
-            }
+                type: DocumentaryType.DocumentaryInternal,
+                year: currentYear
+            },
+            years: years
         }
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
@@ -44,6 +52,7 @@ export default class DocumentaryInternalFilterComponent extends Component<IDocum
         });
     }
     render() {
+        const { years } = this.state;
         return (
             <JarvisWidget id="wid-id-filter-van-ban-noi-bo" editbutton={false} color={JavisWidgetDefault.color} refresh={true}>
                 <header>
@@ -80,6 +89,19 @@ export default class DocumentaryInternalFilterComponent extends Component<IDocum
                                 </div>
                             </div>
                             <div className="dynamic-clear"></div>
+                            <div className="col-lg-2 col-md-5">
+                                <div className="form-group">
+                                    <div>
+                                        <label htmlFor="inputEmail3" className="col-sm-4 control-label">Năm</label>
+                                        <div className="col-sm-8">
+                                            <select className="form-control" onChange={this.handleInputChange} value={this.state.filterData.year} placeholder="Năm..." name="year">
+                                                <option key='all' value={-1} >Tất cả</option>
+                                                {years.map((year: number) => (<option key={year} value={year}>{year}</option>))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="col-lg-2 col-md-6">
                                 <div className="form-group">
                                     <div className="col-lg-12 col-lg-offset-0 col-md-10 col-md-offset-2 col-sm-10 col-sm-offset-2">
@@ -94,7 +116,8 @@ export default class DocumentaryInternalFilterComponent extends Component<IDocum
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-lg-2 col-md-5">
+                            <div className="dynamic-clear"></div>
+                            <div className="col-lg-12">
                                 <div className="form-group">
                                     <div className="col-sm-12 text-right">
                                         <button type="button" onClick={this.handleSearch} className="btn btn-primary"><i className="fa fa-search"></i>&nbsp;Tìm kiếm</button>

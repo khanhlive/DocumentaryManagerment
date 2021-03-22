@@ -3,6 +3,7 @@ using Abp.AutoMapper;
 using DocumentaryManagement.Model;
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace DocumentaryManagement.Documentary.Dto
 {
@@ -18,6 +19,10 @@ namespace DocumentaryManagement.Documentary.Dto
         public DateTime ReleaseDate { get; set; }
         public DateTime ReceivedDate { get; set; }
         public string TextNumber { get; set; }
+        [JsonIgnore]
+        public int? PrefixNumber { get; set; }
+        [JsonIgnore]
+        public string SuffixNumber { get; set; }
         public string Signer { get; set; }
         public string ApprovedBy { get; set; }
         public string ReceivedBy { get; set; }
